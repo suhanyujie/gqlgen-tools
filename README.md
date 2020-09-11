@@ -80,11 +80,55 @@ for _, todo := range r.todos {
 
 最终将 needle 返回即可。
 
-最后，我们从前端发起请求，查看响应值是否符合预期：
+### 验证
+完成 `QueryCondition` 的实现后，我们需要验证它 是否符合预期。我们启动服务 `go run server.go`
+可以通过 GraphQL playground 在浏览器界面发起新增数据的请求，这里为了记录方便，我使用 curl 的方式：
+
+```
+// 新增 1 条 userId 为 1 的 todo
+curl 'http://localhost:8080/query' -H 'Accept-Encoding: gzip, deflate, br' -H 'Content-Type: application/json' -H 'Accept: application/json' -H 'Connection: keep-alive' -H 'DNT: 1' -H 'Origin: http://localhost:8080' --data-binary '{"query":"mutation createTodo {\n  createTodo(input:{text:\"todo\", userId:\"1\"}) {\n    user {\n      id\n    }\n    text\n    done\n  }\n}\n"}' --compressed
+// 新增 2 条 userId 为 3 的 todo
+curl 'http://localhost:8080/query' -H 'Accept-Encoding: gzip, deflate, br' -H 'Content-Type: application/json' -H 'Accept: application/json' -H 'Connection: keep-alive' -H 'DNT: 1' -H 'Origin: http://localhost:8080' --data-binary '{"query":"mutation createTodo {\n  createTodo(input:{text:\"todo\", userId:\"3\"}) {\n    user {\n      id\n    }\n    text\n    done\n  }\n}\n"}' --compressed
+curl 'http://localhost:8080/query' -H 'Accept-Encoding: gzip, deflate, br' -H 'Content-Type: application/json' -H 'Accept: application/json' -H 'Connection: keep-alive' -H 'DNT: 1' -H 'Origin: http://localhost:8080' --data-binary '{"query":"mutation createTodo {\n  createTodo(input:{text:\"todo\", userId:\"3\"}) {\n    user {\n      id\n    }\n    text\n    done\n  }\n}\n"}' --compressed
+```
+
+最后，我们从前端或者用 curl 的方式发起请求，查看响应值是否符合预期。：
 
 ```curl
+// 查询 userId 为 1 的 todo 对象
 curl 'http://localhost:8080/query' -H 'Accept-Encoding: gzip, deflate, br' -H 'Content-Type: application/json' -H 'Accept: application/json' -H 'Connection: keep-alive' -H 'DNT: 1' -H 'Origin: http://localhost:8080' --data-binary '{"query":"query queryParam{\n  queryCondition(input: {userId: \"3\"}){\n    text\n    done\n    user {\n      name\n      id\n    }\n  }\n}\n"}' --compressed
 ```
+
+响应结果为：
+
+```
+{"data":{"queryCondition":[{"text":"todo","done":false,"user":{"name":"user: 1","id":"1"}}]}}
+```
+
+```curl
+// 查询 userId 为 3 的 todo 对象
+curl 'http://localhost:8080/query' -H 'Accept-Encoding: gzip, deflate, br' -H 'Content-Type: application/json' -H 'Accept: application/json' -H 'Connection: keep-alive' -H 'DNT: 1' -H 'Origin: http://localhost:8080' --data-binary '{"query":"query queryParam{\n  queryCondition(input: {userId: \"3\"}){\n    text\n    done\n    user {\n      name\n      id\n    }\n  }\n}\n"}' --compressed
+```
+
+响应结果为：
+
+```
+{"data":{"queryCondition":[{"text":"todo","done":false,"user":{"name":"user: 3","id":"3"}},{"text":"todo","done":false,"user":{"name":"user: 3","id":"3"}}]}}
+```
+
+查询 userId 为 5 的 todo 对象
+
+```curl
+curl 'http://localhost:8080/query' -H 'Accept-Encoding: gzip, deflate, br' -H 'Content-Type: application/json' -H 'Accept: application/json' -H 'Connection: keep-alive' -H 'DNT: 1' -H 'Origin: http://localhost:8080' --data-binary '{"query":"query queryParam{\n  queryCondition(input: {userId: \"5\"}){\n    text\n    done\n    user {\n      name\n      id\n    }\n  }\n}\n"}' --compressed
+```
+
+响应结果为：
+
+```
+{"data":{"queryCondition":[]}}
+```
+
+好了，目前看，都是符合预期的。恭喜，你已经初步学会 graphql 了，但是，请别停下脚步，在实际生产中，需要更加深入的使用和学习！
 
 ## reference
 * 官方教程 https://gqlgen.com/
